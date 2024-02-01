@@ -5,6 +5,10 @@ const app = express()
 //환경변수를 저장해줄 .env파일을 만들기 위한 셋팅
 require('dotenv').config()
 
+app.use(express.json())
+app.use(express.urlencoded({extended:true})) 
+
+
 //api 분리해서 개발한 것들 가져와줌
 app.use('/', require('./routes/minwoo.js') )  //민우 api파일
 app.use('/', require('./routes/yukyeong.js') )  //유경 api파일
@@ -36,5 +40,7 @@ connectDB.then((client)=>{
 app.get('/', (요청, 응답) => {
   응답.send('메인페이지')
 }) 
+
+
 
 
