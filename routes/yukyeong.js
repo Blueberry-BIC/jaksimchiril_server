@@ -2,6 +2,7 @@
 
 //express라이브러리 가져옴
 const router = require('express').Router()
+const ObjectId = require('mongodb').ObjectId
 
 // 몽고DB 객체 가져오는 작업. 이 파일에서 db 접근가능하게 하기 위함 ///////////////////////
 let connectDB = require('./../database.js') //database.js 파일 경로
@@ -22,7 +23,49 @@ router.get('/test', async (요청, 응답)=>{
   })
 */
 
+/** @type { _id: ObjectId, chall_name: string, start_date: Date, end_date: Date, auth_method: int, chall_desc: string, is_public: boolean, category: string, passwd: int, user_num: int, total_days: int } challdata */
+router.get('/activated_chall', async (req, res) => {
+  console.log(`get activated challenge info`);
+  var challdata = await db.collection('activated_chall').find().toArray();
+  for (i in challdata) {
+    challdata[i]._id = challdata[i]._id.toString();
+  }
+  // console.log(challdata)
+  
+  res.send(challdata);
+})
 
+router.get('/chall/:challId', function (req, res) {
+  console.log(`get challenge info`);
+  console.log(req.path);
+  var challdata = db.collection('activated_chall').find();
+  res.send({"result": "GET 호출"});
+})
+
+router.post('/chall', async (req, res, next) => {
+  console.log(`set challenge info`);
+  // console.log(req.body);
+  var name = req.body.challName;
+  var desc = req.body.challDesc;
+  var ispub = req.body.isPublic;
+  var category = req.body.category;
+  var passwd = req.body.passwd;
+  var auth = req.body.authMethod;
+  var startdate = req.body.startdate;
+  var enddate = req.body.enddate;
+  var totaldays = req.body.totalDays;
+  var usernum = req.body.userNum;
+
+  db.collection('activated_chall').insertOne(
+    {chall_name: name, start_date: new Date(startdate), end_date: new Date(enddate), auth_method: auth, chall_desc: desc, is_public: ispub, category: category, passwd: passwd, user_num: usernum, total_days: totaldays}, function(error, result) {
+      console.log(`post success`)
+      if (error) {
+        console.log(error);
+      }
+      db.close();
+  });
+  res.send({"result": "POST Success"});
+})
 
 
 
