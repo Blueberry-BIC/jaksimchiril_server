@@ -23,7 +23,7 @@ router.get('/test', async (요청, 응답)=>{
   })
 */
 
-/** @type { _id: ObjectId, chall_name: string, start_date: Date, end_date: Date, auth_method: int, chall_desc: string, is_public: boolean, category: string, passwd: int, user_num: int, total_days: int } challdata */
+/** @type { _id: ObjectId, chall_name: string, start_date: Date, end_date: Date, auth_method: int, chall_desc: string, is_public: boolean, category: string, passwd: int, user_num: int, total_days: int, is_progress: int, money: int } challdata */
 router.get('/activated_chall', async (req, res) => {
   console.log(`get activated challenge info`);
   var challdata = await db.collection('activated_chall').find().toArray();
@@ -55,9 +55,11 @@ router.post('/chall', async (req, res, next) => {
   var enddate = req.body.enddate;
   var totaldays = req.body.totalDays;
   var usernum = req.body.userNum;
+  var isprogress = req.body.isProgress;
+  var money = req.body.money;
 
   db.collection('activated_chall').insertOne(
-    {chall_name: name, start_date: new Date(startdate), end_date: new Date(enddate), auth_method: auth, chall_desc: desc, is_public: ispub, category: category, passwd: passwd, user_num: usernum, total_days: totaldays}, function(error, result) {
+    {chall_name: name, start_date: new Date(startdate), end_date: new Date(enddate), auth_method: auth, chall_desc: desc, is_public: ispub, category: category, passwd: passwd, user_num: usernum, total_days: totaldays, is_progress: isprogress, money: money}, function(error, result) {
       console.log(`post success`)
       if (error) {
         console.log(error);
