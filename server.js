@@ -12,6 +12,7 @@ app.use(express.urlencoded({extended:true}))
 //api 분리해서 개발한 것들 가져와줌
 app.use('/', require('./routes/minwoo.js') )  //민우 api파일
 app.use('/', require('./routes/yukyeong.js') )  //유경 api파일
+app.use('/', require('./routes/subin.js') )  //수빈 api파일
 
 
 //몽고DB 가져옴  /////////////////////////////////
