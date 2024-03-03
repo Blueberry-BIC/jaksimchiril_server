@@ -167,9 +167,9 @@ caver.wallet.add(keyring)
         let newprize = parseInt(suser.prize_money, 10) + prize
         let newsuser = await db.collection('user').updateOne({_id: new ObjectId(success_users[j])}, {$set: {prize_money: String(newprize)}})
       }
+      //chall document update
+      let newcheck = await db.collection('completed_chall').updateOne({_id: new ObjectId(result[i]._id)}, {$set: {check_prize: true}})
     }
-    //chall document update
-    let newcheck = await db.collection('completed_chall').updateOne({_id: new ObjectId(result[i]._id)}, {$set: {check_prize: true}})
   }
 
 //이 파일 제일 하단에 router변수 export해줘야 server.js 메인파일에서 이 파일 접근가능
