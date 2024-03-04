@@ -22,6 +22,17 @@ connectDB.then((client)=>{
   
 //api ////////////////////////////////////////////////////////////////////////////////////////////
 
+  //유저컬렉션에서 유저 docu 하나 보내주는 api
+  router.get('/user/:userId', async (요청, 응답)=>{
+     
+    let result = await db.collection('user').findOne({ _id : new ObjectId(요청.params.userId) })
+
+    //console.log(result)
+
+    응답.json({result : [result] } ) 
+   
+  }) 
+
 
   //몽고db의 액션퀴즈 document 데이터 하나 보내주는 api
   router.get('/action', async (요청, 응답)=>{
