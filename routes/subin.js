@@ -10,6 +10,7 @@ let db
 connectDB.then((client)=>{
   console.log('수빈 파일 DB연결성공')
   db = client.db('BIC_DB')
+  settlePrize(account)
 }).catch((err)=>{
   console.log(err)
 }) 
@@ -90,6 +91,86 @@ connectDB.then((client)=>{
   })
 
 
+///////////////klaytn 관련 함수////////////////////////////////////////////
+//connect klaytn
+const Caver = require('caver-js')
+const read = require('read')
+const caver = new Caver('https://public-en-baobab.klaytn.net/')
+
+// admin info
+// 여기 추가
+
+const keyring = new caver.wallet.keyring.singleKeyring(account, key)
+caver.wallet.add(keyring)
+
+  // 특정 지갑잔액 보는 함수
+  async function viewbalance(account){
+    const balance = await caver.klay.getBalance(account)
+    console.log(`account: ${account}`)
+    console.log(`balance: ${balance}`)
+  }
+
+  //klay 전송 함수
+  async function sendKlay(from, to, money){
+    const vt = caver.transaction.valueTransfer.create({
+      from: keyring.address,
+      to:to,
+      value: caver.utils.toPeb(money, 'KLAY'),
+      gas: 25000
+    })
+
+    const signed = await caver.wallet.sign(keyring.address, vt)
+    const receipt = await caver.rpc.klay.sendRawTransaction(signed)
+    console.log(receipt)
+  }
+
+  
+  async function settlePrize(from){
+    console.log("get completed chall info")
+    let result =  await db.collection('completed_chall').find({check_prize: false}).toArray()
+
+    for (i in result){
+      var cnt = result[i].total_days  //인증 성공 기준 횟수
+      var success_users = result[i].user_list  //성공한 참가자 id 리스트
+      var chk_success = result[i].is_success  //각 참가자별 성공 여부 리스트
+      var fee = result[i].money  //해당 챌린지의 1인당 참가비
+      var challMoney = fee * success_users.length  //해당 챌린지에 모인 총 금액
+      var recv_money = 0  //각 참가자별 받아야할 금액
+      var prize = 0  // 상금
+      console.log(`fee=${fee}, challMoney=${challMoney}`)
+
+      for (j in chk_success){
+        console.log(chk_success[j])
+        if (chk_success[j] != cnt){
+            //바로 백분율 계산 -> 정산
+            console.log('실패한 사람')
+            let user = await db.collection('user').findOne({_id: new ObjectId(success_users[j])})
+
+            recv_money = (chk_success[j]/cnt)*fee
+            console.log(typeof(user.wallet_addr), String(recv_money))
+            const res = await sendKlay(from, user.wallet_addr, String(recv_money))
+
+            challMoney = challMoney - recv_money
+            success_users.splice(j, 1)
+            console.log(`challmoney : ${challMoney}, success_users: ${success_users}`)
+        }
+      }
+      prize = challMoney / success_users.length
+      console.log(`prize = ${prize}`)
+
+      for (j in success_users){
+        console.log(`성공한 사람: ${j}`)
+        let suser = await db.collection('user').findOne({_id: new ObjectId(success_users[j])})
+        const res = await sendKlay(from, suser.wallet_addr, String(prize))
+
+        //성공한 참가자 document update
+        let newprize = parseInt(suser.prize_money, 10) + prize
+        let newsuser = await db.collection('user').updateOne({_id: new ObjectId(success_users[j])}, {$set: {prize_money: String(newprize)}})
+      }
+      //chall document update
+      let newcheck = await db.collection('completed_chall').updateOne({_id: new ObjectId(result[i]._id)}, {$set: {check_prize: true}})
+    }
+  }
 
 //이 파일 제일 하단에 router변수 export해줘야 server.js 메인파일에서 이 파일 접근가능
 module.exports = router 
