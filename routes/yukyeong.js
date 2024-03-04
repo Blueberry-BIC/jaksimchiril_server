@@ -8,12 +8,13 @@ const ObjectId = require('mongodb').ObjectId
 let connectDB = require('./../database.js') //database.js 파일 경로
 
 let db
-connectDB.then((client)=>{
+connectDB.then((client) => {
   console.log('유경 파일 DB연결성공')
   db = client.db('BIC_DB')
-}).catch((err)=>{
+}).catch((err) => {
   console.log(err)
 }) 
+
 //////////////////////////////////////////////
 
 
@@ -22,6 +23,7 @@ router.get('/test', async (요청, 응답)=>{
     응답.send('/test로 접속 성공')
   })
 */
+
 
 /** @type { _id: ObjectId, chall_name: string, start_date: Date, end_date: Date, auth_method: int, chall_desc: string, is_public: boolean, category: string, passwd: int, user_num: int, total_days: int, is_progress: int, money: int } challdata */
 router.get('/activated_chall', async (req, res) => {
@@ -33,6 +35,16 @@ router.get('/activated_chall', async (req, res) => {
   // console.log(challdata)
   
   res.send(challdata);
+})
+
+router.get('/user/:walletaddr', async (req, res) => {
+  console.log(`get user id info`);
+  console.log(req.params);
+  var userid = await db.collection('user').findOne({wallet_addr: req.params.walletaddr}, {projection:{ _id: 1 }});
+  console.log(userid.toString());
+  console.log(userid._id.toString());
+
+  res.send(userid._id.toString());
 })
 
 router.get('/chall/:challId', function (req, res) {
@@ -67,6 +79,29 @@ router.post('/chall', async (req, res, next) => {
       db.close();
   });
   res.send({"result": "POST Success"});
+})
+
+router.put('/chall', (req, res) => {
+  console.log(`update challenge info`);
+  console.log(req.body);
+  // console.log(req.body.challName);
+  // db.collection('activated_chall').update(req.body);
+  // var name = req.body.challName;
+  // var desc = req.body.challDesc;
+  // var ispub = req.body.isPublic;
+  // var category = req.body.category;
+  // var passwd = req.body.passwd;
+  const {name, desc, ispub, category, passwd} = req.body
+
+  db.collection('activated_chall').insertOne(
+    {chall_name: name, chall_desc: desc, is_public: ispub, category: category, passwd: passwd}, function(error, result) {
+      console.log(`post success`)
+      if (error) {
+        console.log(error)
+      }
+
+  });
+  res.send({"result": "PUT 호출"});
 })
 
 
