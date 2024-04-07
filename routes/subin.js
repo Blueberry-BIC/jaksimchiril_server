@@ -33,11 +33,51 @@ connectDB.then((client)=>{
     })
   })
 
+  // 지갑 주소로 사용자가 DB에 존재하는 유저인지 확인하는 api
+  router.get('/check/:walletAddr', async (req, res)=>{
+    console.log("check exist user by walletaddr")
+    var walletdata = req.params.walletAddr
+    let result = await db.collection('user').findOne({wallet_addr: walletdata})
+    if (result == null){
+      //DB에 존재하지 않는 신규 유저
+      res.json({
+        existUser: false
+      })
+    }
+    else {
+      //DB에 존재하는 기존 유저
+      res.json({
+        existUser: true
+      })
+    }
+  })
+
+  // 신규 유저 등록 api
+  router.post('/user/add', async(req, res)=>{
+    console.log("register new user")
+    console.log(req.body)
+    
+    var name = req.body.userName
+    var wallet_addr = req.body.walletAddr
+    var github_id = req.body.githubId
+    var emptystack = new Array("")
+
+    try {
+      let result = await db.collection('user').insertOne({name: name, wallet_addr: wallet_addr, github_id: github_id, prize:"0", stack1:emptystack, stack2: emptystack, stack3: emptystack, stack4: emptystack, progress_chall: emptystack})
+    } catch(err){
+      console.log(`ERROR: ${err}`)
+    }
+
+    res.json({
+      data: name
+    })
+  })
+
   // 참가하기 눌렀을 때 activated_chall collection 업데이트하는 api
   router.put('/participate/:chall_id', async (req, res)=> {
     console.log("PUT user_list")
     const challId = req.params.chall_id
-    //console.log(req.body)
+    console.log(req.body)
     let msg = ""
 
     var usernum = req.body.userNum
@@ -64,6 +104,7 @@ connectDB.then((client)=>{
     let result = await db.collection('user').findOne({_id: new ObjectId(userId)})
     let progresschall = result.progress_chall
     let msg = ""
+    console.log(result)
 
     if (progresschall.includes(req.body.data, 0) == false){
       if (progresschall[0] == ""){
@@ -75,6 +116,7 @@ connectDB.then((client)=>{
       try {
         let result2 = await db.collection('user').updateOne({_id: new ObjectId(userId)}, {$set: {progress_chall: progresschall}})
         msg = "챌린지 참여 완료되었습니다."
+        //msg = true
       } catch (err) {
         console.log(`ERROR: ${err}`)
       }
@@ -82,6 +124,7 @@ connectDB.then((client)=>{
     else{
       console.log("이미 존재하는 챌린지")
       msg = "이미 존재하는 챌린지입니다"
+      //msg = false
     }
 
     //console.log(progresschall)
