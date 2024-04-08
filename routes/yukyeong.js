@@ -78,6 +78,7 @@ router.post('/chall', async (req, res, next) => {
   var startdate = req.body.startdate;
   var enddate = req.body.enddate;
   var totaldays = req.body.totalDays;
+
   var usernum = req.body.userNum;
   var isprogress = req.body.isProgress;
   var money = req.body.money;

@@ -142,6 +142,8 @@ const caver = new Caver('https://public-en-baobab.klaytn.net/')
 
 // admin info
 // 여기 추가
+const account = process.env.WALLET_ADDR
+const key =  process.env.WALLET_PRIKEY
 
 const keyring = new caver.wallet.keyring.singleKeyring(account, key)
 caver.wallet.add(keyring)
