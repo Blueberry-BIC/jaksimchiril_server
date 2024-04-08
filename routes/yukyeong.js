@@ -41,10 +41,22 @@ router.get('/wallet/:walletaddr', async (req, res) => {
   console.log(`get user id info`);
   console.log(req.params);
   var userid = await db.collection('user').findOne({wallet_addr: req.params.walletaddr}, {projection:{ _id: 1 }});
-  //console.log(userid.toString());
-  //console.log(userid._id.toString());
+  // console.log(userid.toString());
+  console.log(userid._id.toString());
 
   res.send(userid._id.toString());
+})
+
+router.delete('/delete/:userid', async (req, res) => {
+  console.log(`delete user by userid`);
+  console.log(req.params);
+  var result = await db.collection('user').deleteOne({_id: new ObjectId(req.params.userid)}, function(err, obj) {
+    if (err) throw err;
+    console.log("1 document deleted");
+    db.close();
+  });
+
+
 })
 
 router.get('/chall/:challId', function (req, res) {
