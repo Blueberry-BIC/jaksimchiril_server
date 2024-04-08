@@ -33,6 +33,8 @@ connectDB.then((client)=>{
     })
   })
 
+
+  
   // 참가하기 눌렀을 때 activated_chall collection 업데이트하는 api
   router.put('/participate/:chall_id', async (req, res)=> {
     console.log("PUT user_list")
@@ -99,6 +101,8 @@ const caver = new Caver('https://public-en-baobab.klaytn.net/')
 
 // admin info
 // 여기 추가
+const account = process.env.WALLET_ADDR
+const key =  process.env.WALLET_PRIKEY
 
 const keyring = new caver.wallet.keyring.singleKeyring(account, key)
 caver.wallet.add(keyring)

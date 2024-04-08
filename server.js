@@ -26,7 +26,7 @@ connectDB.then((client)=>{
 
   //서버 띄우는 코드.  http://localhost:8081 으로 서버 접속 가능 -> .env파일 만들어서 각자의 포트번호로 적기. 8080이나 8081 적으면 될듯
   app.listen(process.env.PORT, () => {
-    console.log('http://localhost:8081 에서 서버 실행중')
+    console.log('app.listen으로 서버 실행중')
   })
   
 }).catch((err)=>{

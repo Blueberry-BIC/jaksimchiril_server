@@ -7,7 +7,6 @@ const axios = require("axios")
 const cheerio = require("cheerio")
 const moment = require("moment") //날짜 원하는식으로 포맷 위한 라이브러리
 
-
 // 몽고DB 객체 가져오는 작업. 이 파일에서 db 접근가능하게 하기 위함 ///////////////////////
 let connectDB = require('./../database.js') //database.js 파일 경로
 const { ObjectId, Int32 } = require('mongodb')
@@ -20,19 +19,35 @@ connectDB.then((client)=>{
   console.log(err)
 }) 
   
-//api ////////////////////////////////////////////////////////////////////////////////////////////
+//api ////////////////////////////////////////
+////////////////////////////////////////////////////
+
+
+
+//인증 성공해서 db안 해당 유저의 userid값 필드에 +1 해주는 api
+router.put('/success/:userId/:challId', async (요청, 응답)=> {
+  
+  console.log("성공성공~~요청.params.userId:"+요청.params.userId )
+  console.log("성공성공~~요청.params.challId:"+요청.params.challId)
+  let userid = 요청.params.userId
+  
+  db.collection('activated_chall')
+  .updateOne({ _id : new ObjectId(요청.params.challId) }, { $inc : { [userid] : 1 }})
+  
+  응답.send("성공횟수 증가 완료") 
+})
+
+
 
   //유저컬렉션에서 유저 docu 하나 보내주는 api
-  router.get('/user/:userId', async (요청, 응답)=>{
-     
-    let result = await db.collection('user').findOne({ _id : new ObjectId(요청.params.userId) })
+  router.get('/user/:userid', async (요청, 응답)=>{
+
+    let result = await db.collection('user').findOne({ _id : new ObjectId(요청.params.userid) })
 
     //console.log(result)
 
-    응답.json({result : [result] } ) 
-   
+    응답.json({result : [result]}) 
   }) 
-
 
   //몽고db의 액션퀴즈 document 데이터 하나 보내주는 api
   router.get('/action', async (요청, 응답)=>{
@@ -113,6 +128,7 @@ connectDB.then((client)=>{
     return diff  //두 날짜값 차이를 return
   }
   
+
 
 
 
