@@ -23,6 +23,17 @@ connectDB.then((client)=>{
 ////////////////////////////////////////////////////
 
 
+//activated_chall에서 챌린지 도큐 하나 보내주는 api
+router.get('/certifycount/:challId', async (요청, 응답)=>{
+
+  let result = await db.collection('activated_chall').findOne({ _id : new ObjectId(요청.params.challId) })
+  
+
+  console.log(result)
+
+  응답.json({result : [result]}) 
+}) 
+
 
 //인증 성공해서 db안 해당 유저의 userid값 필드에 +1 해주는 api
 router.put('/success/:userId/:challId', async (요청, 응답)=> {
@@ -38,7 +49,6 @@ router.put('/success/:userId/:challId', async (요청, 응답)=> {
 })
 
 
-
   //유저컬렉션에서 유저 docu 하나 보내주는 api
   router.get('/user/:userid', async (요청, 응답)=>{
 
@@ -48,6 +58,8 @@ router.put('/success/:userId/:challId', async (요청, 응답)=> {
 
     응답.json({result : [result]}) 
   }) 
+
+
 
   //몽고db의 액션퀴즈 document 데이터 하나 보내주는 api
   router.get('/action', async (요청, 응답)=>{
