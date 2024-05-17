@@ -10,7 +10,7 @@ let db
 connectDB.then((client)=>{
   console.log('수빈 파일 DB연결성공')
   db = client.db('BIC_DB')
-  settlePrize(account)
+
 }).catch((err)=>{
   console.log(err)
 }) 
@@ -37,7 +37,9 @@ connectDB.then((client)=>{
   router.get('/check/:walletAddr', async (req, res)=>{
     console.log("check exist user by walletaddr")
     var walletdata = req.params.walletAddr
+    console.log(walletdata)
     let result = await db.collection('user').findOne({wallet_addr: walletdata})
+    console.log(`result = ${result.name}`)
     if (result == null){
       //DB에 존재하지 않는 신규 유저
       res.json({
@@ -134,88 +136,47 @@ connectDB.then((client)=>{
   })
 
 
-///////////////klaytn 관련 함수////////////////////////////////////////////
-//connect klaytn
-const Caver = require('caver-js')
-const read = require('read')
-const caver = new Caver('https://public-en-baobab.klaytn.net/')
+  //참여중인 챌린지만 가져오기
+  /** @type { _id: ObjectId, chall_name: string, start_date: Date, end_date: Date, auth_method: int, chall_desc: string, is_public: boolean, category: string, passwd: int, user_num: int, total_days: int, is_progress: int, money: int, user_list: Array } challdata */
+  router.get('/get/mychall/:user_id', async (req, res) => {
+    console.log(`get my challenges`);
+    const userId = req.params.user_id
+    var mychallArray = new Array();
+    let result1 = await db.collection('user').findOne({_id: new ObjectId(userId)});
+    var progresschall = result1.progress_chall
 
-// admin info
-// 여기 추가
-const account = process.env.WALLET_ADDR
-const key =  process.env.WALLET_PRIKEY
-
-const keyring = new caver.wallet.keyring.singleKeyring(account, key)
-caver.wallet.add(keyring)
-
-  // 특정 지갑잔액 보는 함수
-  async function viewbalance(account){
-    const balance = await caver.klay.getBalance(account)
-    console.log(`account: ${account}`)
-    console.log(`balance: ${balance}`)
-  }
-
-  //klay 전송 함수
-  async function sendKlay(from, to, money){
-    const vt = caver.transaction.valueTransfer.create({
-      from: keyring.address,
-      to:to,
-      value: caver.utils.toPeb(money, 'KLAY'),
-      gas: 25000
-    })
-
-    const signed = await caver.wallet.sign(keyring.address, vt)
-    const receipt = await caver.rpc.klay.sendRawTransaction(signed)
-    console.log(receipt)
-  }
-
-  
-  async function settlePrize(from){
-    console.log("get completed chall info")
-    let result =  await db.collection('completed_chall').find({check_prize: false}).toArray()
-
-    for (i in result){
-      var cnt = result[i].total_days  //인증 성공 기준 횟수
-      var success_users = result[i].user_list  //성공한 참가자 id 리스트
-      var chk_success = result[i].is_success  //각 참가자별 성공 여부 리스트
-      var fee = result[i].money  //해당 챌린지의 1인당 참가비
-      var challMoney = fee * success_users.length  //해당 챌린지에 모인 총 금액
-      var recv_money = 0  //각 참가자별 받아야할 금액
-      var prize = 0  // 상금
-      console.log(`fee=${fee}, challMoney=${challMoney}`)
-
-      for (j in chk_success){
-        console.log(chk_success[j])
-        if (chk_success[j] != cnt){
-            //바로 백분율 계산 -> 정산
-            console.log('실패한 사람')
-            let user = await db.collection('user').findOne({_id: new ObjectId(success_users[j])})
-
-            recv_money = (chk_success[j]/cnt)*fee
-            console.log(typeof(user.wallet_addr), String(recv_money))
-            const res = await sendKlay(from, user.wallet_addr, String(recv_money))
-
-            challMoney = challMoney - recv_money
-            success_users.splice(j, 1)
-            console.log(`challmoney : ${challMoney}, success_users: ${success_users}`)
-        }
+    if (progresschall){
+      for (i in progresschall){
+        console.log(progresschall[i])
+        var challdata = await db.collection('activated_chall').findOne({_id: new ObjectId(progresschall[i])});
+        mychallArray[i] = challdata
+        mychallArray[i]._id = progresschall[i]
+        console.log(challdata)
       }
-      prize = challMoney / success_users.length
-      console.log(`prize = ${prize}`)
-
-      for (j in success_users){
-        console.log(`성공한 사람: ${j}`)
-        let suser = await db.collection('user').findOne({_id: new ObjectId(success_users[j])})
-        const res = await sendKlay(from, suser.wallet_addr, String(prize))
-
-        //성공한 참가자 document update
-        let newprize = parseInt(suser.prize_money, 10) + prize
-        let newsuser = await db.collection('user').updateOne({_id: new ObjectId(success_users[j])}, {$set: {prize_money: String(newprize)}})
-      }
-      //chall document update
-      let newcheck = await db.collection('completed_chall').updateOne({_id: new ObjectId(result[i]._id)}, {$set: {check_prize: true}})
     }
+    
+    res.send(mychallArray);
+  })
+
+//참여중인 사용자가 클릭했는지를 확인하기 위해 각 activatedchall에서 userlist 확인하는 api
+router.get('/get/userlist', async (req, res) =>{
+  console.log('get userlist and certifystatus')
+  var challId = req.query.challId
+  var userId = req.query.userId
+  console.log(challId, userId)
+  let acuser = await db.collection('activated_chall').findOne({_id: new ObjectId(challId)})
+  var userlist = acuser.user_list
+  var usercertify = false
+  var msg = userlist.includes(userId)
+  if (msg){
+  var usercertify = acuser[`${userId}`]
   }
+  console.log(`userlist = ${userlist}, ${usercertify}`)
+  res.json({
+    isparticipant: msg,
+    certified: usercertify[1]
+  })
+})
 
 //이 파일 제일 하단에 router변수 export해줘야 server.js 메인파일에서 이 파일 접근가능
 module.exports = router 

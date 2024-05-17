@@ -19,6 +19,7 @@
     "install": "^0.13.0",
     "moment": "^2.30.1",
     "mongodb": "^5.9.2",
+    "node-schedule": "^2.1.1",
     "read": "^3.0.1"
   }
 }

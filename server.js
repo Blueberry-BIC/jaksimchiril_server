@@ -8,6 +8,7 @@ require('dotenv').config()
 app.use(express.json())
 app.use(express.urlencoded({extended:true})) 
 
+require('./cron')
 
 //api 분리해서 개발한 것들 가져와줌
 app.use('/', require('./routes/minwoo.js') )  //민우 api파일
