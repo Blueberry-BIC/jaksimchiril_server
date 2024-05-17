@@ -14,7 +14,7 @@ connectDB.then((client)=>{
   console.log(err)
 }) 
 
-const job = schedule.scheduleJob('0 42 17 * * *', ()=>{
+const job = schedule.scheduleJob('0 0 0 * * *', ()=>{
     settlePrize(account)
     let today = moment().format()
     console.log("start everyday format")
