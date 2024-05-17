@@ -28,8 +28,7 @@ router.get('/certifycount/:challId', async (요청, 응답)=>{
 
   let result = await db.collection('activated_chall').findOne({ _id : new ObjectId(요청.params.challId) })
   
-
-  console.log(result)
+  //console.log(result)
 
   응답.json({result : [result]}) 
 }) 
@@ -37,15 +36,14 @@ router.get('/certifycount/:challId', async (요청, 응답)=>{
 
 //인증 성공해서 db안 해당 유저의 userid값 필드에 +1 해주는 api
 router.put('/success/:userId/:challId', async (요청, 응답)=> {
-  
-  console.log("성공성공~~요청.params.userId:"+요청.params.userId )
-  console.log("성공성공~~요청.params.challId:"+요청.params.challId)
+  // console.log("성공~~요청.params.userId:"+요청.params.userId )
+  //console.log("성공~~요청.params.challId:"+요청.params.challId)
   let userid = 요청.params.userId
-  
+
   db.collection('activated_chall')
-  .updateOne({ _id : new ObjectId(요청.params.challId) }, { $inc : { [userid] : 1 }})
-  
-  응답.send("성공횟수 증가 완료") 
+  .updateOne({ _id : new ObjectId(요청.params.challId) }, { $inc : { [`${userid}.0`] : 1 }}) //몽고db의 array필드의 0번째 인덱스값 1 증가시키기
+
+  응답.send("성공횟수 증가 완료")      
 })
 
 
@@ -70,7 +68,6 @@ router.put('/success/:userId/:challId', async (요청, 응답)=> {
    
     응답.json({result : result}) 
   }) 
-
 
   
    //깃허브 크롤링해서 커밋했는지 여부 보내주는 api
@@ -124,6 +121,58 @@ router.put('/success/:userId/:challId', async (요청, 응답)=> {
     }
     응답.json({is_committed : is_committed, lastcommitday : lastcommitday, commitRepo : commitRepo})// 커밋여부, 마지막 커밋날짜, 커밋한 repo의 이름 전달
   }) 
+
+
+
+ //it뉴스 사이트 크롤링해서 it시사문제 보여주는 api
+ router.get('/news', async (요청, 응답)=>{
+
+  let title=""
+  let contents=""
+  let media=""
+  let time=""
+  let url=""
+
+  try {
+    await axios.get("https://news.naver.com/breakingnews/section/105/732")  //네이버 뉴스의 'it/과학' 탭의 '보안/해킹' 파트
+    .then((response) =>{
+
+        const htmlString = response.data
+        const $ = cheerio.load(htmlString)
+
+        //뉴스의 제목을 가져옴
+        const data1 = $('div.section_latest  strong.sa_text_strong').get(0) 
+        title = $(data1).text()
+        //console.log("data1:" + $(data1).text())
+
+        //뉴스의 소제목 내용을 가져옴
+        const data2 = $('div.section_latest  div.sa_text_lede').get(0) 
+        contents = $(data2).text()
+        //console.log("data2:" + $(data2).text())
+
+        //어디 언론사인지 가져옴
+        const data3 = $('div.section_latest  div.sa_text_press').get(0) 
+        media = $(data3).text()
+        //console.log("data3:" + $(data3).text())
+
+         //뉴스 작성된 시간 가져옴
+         const data4 = $('div.section_latest  div.sa_text_datetime b').get(0) 
+         time = $(data4).text()
+         //console.log("data4:" + $(data4).text())
+
+         //뉴스의 url 가져옴
+         const data5 = $('div.section_latest  div.sa_thumb_inner a').attr('href')  
+         url = data5
+         //console.log("data5:" + data5)
+
+})
+  } catch (error) {
+    console.log("it뉴스 크롤링 에러")
+  }
+  응답.json({title : title, contents : contents, media : media, time : time, url : url}) // 뉴스의 제목, 소내용, 언론사, 작성시간, url 값 보냄
+}) 
+
+
 
 
 
