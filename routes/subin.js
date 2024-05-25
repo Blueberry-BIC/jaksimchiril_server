@@ -145,13 +145,12 @@ connectDB.then((client)=>{
     let result1 = await db.collection('user').findOne({_id: new ObjectId(userId)});
     var progresschall = result1.progress_chall
 
-    if (progresschall){
+    if ((Array.isArray(progresschall) && progresschall[0]!='') || progresschall != null){
       for (i in progresschall){
         console.log(progresschall[i])
         var challdata = await db.collection('activated_chall').findOne({_id: new ObjectId(progresschall[i])});
         mychallArray[i] = challdata
         mychallArray[i]._id = progresschall[i]
-        console.log(challdata)
       }
     }
     
@@ -163,18 +162,22 @@ router.get('/get/userlist', async (req, res) =>{
   console.log('get userlist and certifystatus')
   var challId = req.query.challId
   var userId = req.query.userId
-  console.log(challId, userId)
+  console.log(`challId=${challId}, userId=${userId}`)
   let acuser = await db.collection('activated_chall').findOne({_id: new ObjectId(challId)})
   var userlist = acuser.user_list
-  var usercertify = false
-  var msg = userlist.includes(userId)
-  if (msg){
-  var usercertify = acuser[`${userId}`]
+  var res2 = false
+  var msg = false
+  if (userlist) {
+    var msg = userlist.includes(userId)
+    if (msg){
+    var usercertify = acuser[`${userId}`]
+    res2 = usercertify[1]
+    console.log(`userlist = ${userlist}, ${res2}`)
+    }
   }
-  console.log(`userlist = ${userlist}, ${usercertify}`)
   res.json({
     isparticipant: msg,
-    certified: usercertify[1]
+    certified: res2
   })
 })
 
