@@ -75,61 +75,21 @@ connectDB.then((client)=>{
     })
   })
 
-  // 참가하기 눌렀을 때 activated_chall collection 업데이트하는 api
-  router.put('/participate/:chall_id', async (req, res)=> {
-    console.log("PUT user_list")
+
+  //챌린지 참가하기
+  router.put('/participate/:chall_id/:user_id', async (req, res)=> {
     const challId = req.params.chall_id
-    console.log(req.body)
-    let msg = ""
-
-    var usernum = req.body.userNum
-    var userlist = req.body.userList
-
-    try {
-      let result = await db.collection('activated_chall').updateOne({_id: new ObjectId(challId)}, {$set: {user_list: userlist, user_num: usernum}})
-      msg = "챌린지 참여 완료되었습니다."
-    } catch (err) {
-      console.log(`ERROR: ${err}`)
-    }
-
-    res.json({
-      data: msg
-    })
-
-  })
-
-  //참가하기 눌렀을 때 user collection 업데이트하는 api
-  router.patch('/participate/:user_id', async (req, res)=>{
-    console.log("PATCH progress_chall")
     const userId = req.params.user_id
-    //console.log(req.body)
-    let result = await db.collection('user').findOne({_id: new ObjectId(userId)})
-    let progresschall = result.progress_chall
-    let msg = ""
-    console.log(result)
-
-    if (progresschall.includes(req.body.data, 0) == false){
-      if (progresschall[0] == ""){
-        progresschall[0] = req.body.data
-      }
-      else {
-        progresschall.push(req.body.data)
-      }
-      try {
-        let result2 = await db.collection('user').updateOne({_id: new ObjectId(userId)}, {$set: {progress_chall: progresschall}})
-        msg = "챌린지 참여 완료되었습니다."
-        //msg = true
-      } catch (err) {
-        console.log(`ERROR: ${err}`)
-      }
+    var msg = ""
+    console.log(`participate challenge : ${challId}, with ${userId}`)
+    try{
+      let res1 = await db.collection('activated_chall').updateOne({_id:new ObjectId(challId)}, {"$push": {user_list: userId}, $inc:{user_num:1}})
+      let res2 = await db.collection('user').updateOne({_id:new ObjectId(userId)}, {"$push": {progress_chall: challId}})
+      msg = "참가 성공"
+    } catch(e){
+      console.log(e)
+      msg = "참가 실패"
     }
-    else{
-      console.log("이미 존재하는 챌린지")
-      msg = "이미 존재하는 챌린지입니다"
-      //msg = false
-    }
-
-    //console.log(progresschall)
     res.json({
       data: msg
     })
@@ -164,15 +124,16 @@ router.get('/get/userlist', async (req, res) =>{
   var userId = req.query.userId
   console.log(`challId=${challId}, userId=${userId}`)
   let acuser = await db.collection('activated_chall').findOne({_id: new ObjectId(challId)})
-  var userlist = acuser.user_list
   var res2 = false
   var msg = false
-  if (userlist) {
-    var msg = userlist.includes(userId)
+
+  if (acuser && acuser.user_list){
+    var userlist = acuser.user_list
+    msg = acuser.user_list.includes(userId)
     if (msg){
-    var usercertify = acuser[`${userId}`]
-    res2 = usercertify[1]
-    console.log(`userlist = ${userlist}, ${res2}`)
+      var usercertify = acuser[`${userId}`]
+      usercertify ? res2=usercertify[1] : res2 = false
+      console.log(`userlist = ${userlist}, ${res2}`)
     }
   }
   res.json({
