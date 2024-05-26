@@ -18,8 +18,8 @@ const job = schedule.scheduleJob('0 0 0 * * *', ()=>{
     settlePrize(account)
     let today = moment().format()
     console.log("start everyday format")
-    //let today = "2024-04-14T00:00:00.000+00:00"
     moveCompletedChall(today)
+    changeIsProgress(today)
     changeCertifyStatus()
 })
 
@@ -237,3 +237,12 @@ caver.wallet.add(keyring)
     console.log("finish change all user false")
 
   }
+
+  ///////////////챌린지 진행 관련 함수////////////////////////////////////////////
+  // 챌린지 시작 기간 확인 후 is_progress 변경
+  async function changeIsProgress(today){
+    console.log("check start data of challenges")
+    let res = await db.collection('activated_chall').updateMany({start_date: {$lte:new Date(today)}}, {$set: {is_progress:1}})
+    console.log("finish changeIsProgress")
+  }
+  

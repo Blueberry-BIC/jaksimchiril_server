@@ -39,7 +39,6 @@ connectDB.then((client)=>{
     var walletdata = req.params.walletAddr
     console.log(walletdata)
     let result = await db.collection('user').findOne({wallet_addr: walletdata})
-    console.log(`result = ${result.name}`)
     if (result == null){
       //DB에 존재하지 않는 신규 유저
       res.json({
@@ -83,6 +82,7 @@ connectDB.then((client)=>{
     var msg = ""
     console.log(`participate challenge : ${challId}, with ${userId}`)
     try{
+      let res0 = await db.collection('user').updateOne({_id:new ObjectId(userId)}, {"$pull": {progress_chall: ""}})
       let res1 = await db.collection('activated_chall').updateOne({_id:new ObjectId(challId)}, {"$push": {user_list: userId}, $inc:{user_num:1}})
       let res2 = await db.collection('user').updateOne({_id:new ObjectId(userId)}, {"$push": {progress_chall: challId}})
       msg = "참가 성공"
@@ -102,15 +102,19 @@ connectDB.then((client)=>{
     console.log(`get my challenges`);
     const userId = req.params.user_id
     var mychallArray = new Array();
-    let result1 = await db.collection('user').findOne({_id: new ObjectId(userId)});
-    var progresschall = result1.progress_chall
+    let result = await db.collection('user').findOne({_id: new ObjectId(userId)});
 
-    if ((Array.isArray(progresschall) && progresschall[0]!='') || progresschall != null){
+    if (result && result.progress_chall) {
+      var progresschall = result.progress_chall
+
       for (i in progresschall){
-        console.log(progresschall[i])
-        var challdata = await db.collection('activated_chall').findOne({_id: new ObjectId(progresschall[i])});
-        mychallArray[i] = challdata
-        mychallArray[i]._id = progresschall[i]
+
+        if(progresschall[i] == "") continue
+        var challdata = await db.collection('activated_chall').findOne({_id: new ObjectId(progresschall[i])})
+        if (challdata){
+          mychallArray[i] = challdata
+          mychallArray[i]._id = progresschall[i]
+        }
       }
     }
     
