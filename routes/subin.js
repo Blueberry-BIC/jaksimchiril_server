@@ -117,7 +117,6 @@ connectDB.then((client)=>{
         }
       }
     }
-    
     res.send(mychallArray);
   })
 
@@ -144,6 +143,20 @@ router.get('/get/userlist', async (req, res) =>{
     isparticipant: msg,
     certified: res2
   })
+})
+
+
+// 사용자별 종료된 챌린지 가져오는 함수
+router.get('/get/:user_id/completed', async (req, res)=>{
+  const user = req.params.user_id;
+  const projection = { _id: 1, chall_name: 1, start_date: 1, auth_method: 1, category: 1, user_num: 1, total_days: 1, money: 1 }
+  let completed = await db.collection('completed_chall').find({user_list: user}).project(projection).toArray()
+  console.log(completed);
+
+  for (i in completed) {
+    completed[i]._id = completed[i]._id.toString();
+  }
+  res.send(completed);
 })
 
 //이 파일 제일 하단에 router변수 export해줘야 server.js 메인파일에서 이 파일 접근가능
